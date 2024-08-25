@@ -1,5 +1,8 @@
 <?php
+// MANEJO DE TIEMPO
 $start = microtime(true);
+
+// MANEJO DE ARCHVIOS (.CSV)
 $path_1 = "Archivo1.csv";
 $path_2 = "archivo2.csv";
 $archivo_1 = fopen($path_1, "r");
@@ -18,6 +21,7 @@ while (!feof($archivo_2)){
 }
 fclose($archivo_2);
 
+// LIMPIEZA
 // Limpiar Archivo1 de valores nulos (X en nulos)
 for ($i = 1; $i < count($array_1); $i++){
     if ($array_1[$i][0] == ""){
@@ -78,6 +82,7 @@ for ($i = 1; $i < count($array_1); $i++){
         $array_1[$i][22] = "x";
     }
 }
+
 //Limpiar archivo 1 de tipo de datos, int, srr, etc (X en valores erroneos)
 for ($i = 1; $i < count($array_1); $i++){
     if (!is_string($array_1[$i][0])){
@@ -134,7 +139,11 @@ for ($i = 1; $i < count($array_1); $i++){
     if (!is_string($array_1[$i][21])){
         $array_1[$i][21] = "x";
     }
+    if ($array_1[$i][19] > 7.0 || $array_1[$i][19] < 1.0){
+        $array_1[$i][19] = "x";
+    }
 }
+
 //Limpiar archivo 2 de no nulos (X en nulos)
 for ($i = 1; $i < count($array_2); $i++){
     if ($array_2[$i][0] == ""){
@@ -193,6 +202,7 @@ for ($i = 1; $i < count($array_2); $i++){
         $array_2[$i][14] = "x";
     }
 }
+
 //FUNCIONES
 // FUNCION ELIMINAR REPETIDOS (DEBEN SER EXACTAMENTE IGUALES)
 function eliminar_repetidos($array){
@@ -204,6 +214,7 @@ function eliminar_repetidos($array){
     }
     return $array_vacio;
 }
+
 //FUNCION IMPRIMIR
 function pretty_print($array){
     foreach ($array as $subarray){
@@ -300,7 +311,6 @@ for ($i = 1; $i < count($cursos); $i++){ // Arreglamos no nulos
 }
 
 //Notas
-
 $notas = [["Número de estudiante", "Sigla", "Periodo", "Calificación", "Nota"]];
 for ($i = 1; $i < count($array_1); $i++){
     $datos_nota = [$array_1[$i][10], $array_1[$i][14], $array_1[$i][13], $array_1[$i][18], $array_1[$i][19]];
@@ -322,7 +332,6 @@ if ($archivo_personas){
     }
     fclose($archivo_personas);
 }
-
 $archivo_estudiantes = fopen("estudiantes.txt", 'w');
 if ($archivo_estudiantes){
     foreach ($estudiantes as $estudiante) {
@@ -331,7 +340,6 @@ if ($archivo_estudiantes){
     }
     fclose($archivo_estudiantes);
 }
-
 $archivo_profesores = fopen("profesores.txt", 'w');
 if ($archivo_profesores){
     foreach ($profesores as $profesor) {
@@ -340,7 +348,6 @@ if ($archivo_profesores){
     }
     fclose($archivo_profesores);
 }
-
 $archivo_administrativos = fopen("administrativos.txt", 'w');
 if ($archivo_administrativos){
     foreach ($administrativos as $administrativo) {
@@ -367,101 +374,112 @@ if ($archivo_cursos){
     }
     fclose($archivo_cursos);
 }
+
 // MANEJO DE CONSOLA
 if (isset($argv[1])){
-    $run = substr($argv[1], 0, -1);
+    $run_ingresado = substr($argv[1], 0, -1);
 }
 else{
     echo "No ha especificado RUN\n";
-    echo "Formato argumentos por consola: php bananer.php RUN(sin guión) CURSO PERIODO\n escribir siempre 3 argmentos como formato.";
-    $run = "";
+    echo "\nFormato argumentos por consola: php bananer.php RUN(sin guión) CURSO PERIODO\n escribir siempre 3 argmentos como formato.";
+    $run_ingresado = "";
 }
 
 if (isset($argv[2])){
-    $curso = $argv[2];
+    $curso_ingresado = $argv[2];
 }
 else{
     echo "No ha especificado curso\n";
-    echo "Formato argumentos por consola: php bananer.php RUN(sin guión) CURSO PERIODO\n escribir siempre 3 argmentos como formato.";
-    $curso = "";
+    echo "\nFormato argumentos por consola: php bananer.php RUN(sin guión) CURSO PERIODO\n escribir siempre 3 argmentos como formato.";
+    $curso_ingresado = "";
 }
-
 if (isset($argv[3])){
-    $periodo = $argv[3];
+    $periodo_ingresado = $argv[3];
 }
 else{
-    echo "No ha especificado periodo\n";
-    echo "Formato argumentos por consola: php bananer.php RUN(sin guión) CURSO PERIODO\n escribir siempre 3 argmentos como formato.";
-    $periodo = "";
+    echo "\nNo ha especificado periodo";
+    echo "\nFormato argumentos por consola: php bananer.php RUN(sin guión) CURSO PERIODO\n escribir siempre 3 argmentos como formato.";
+    $periodo_ingresado = "";
 }
+
 // PRIMERA REQUEST
-$data_alumno = [["Periodo", "Sigla", "Curso", "Nota", "Calificación"]];
+$data_alumno = [];
 foreach($array_1 as $persona){
-    if ($persona[4] == $run){
+    if ($persona[4] == $run_ingresado){
+        
     $datos_relevantes = [$persona[13], $persona[14], $persona[15], $persona[19], $persona[18]];
     array_push($data_alumno, $datos_relevantes);
+        
     }
 }
-$data_alumno = eliminar_repetidos($data_alumno);
-$periodo_notas = [];
-foreach($data_alumno as $tiempo){
-    if (!array_key_exists($tiempo[0], $periodo_notas)){
-        $periodo_notas[$tiempo[0]] = [];
+if (count($data_alumno) == 0){
+    echo "No hay alumnos con ese RUN";
+}
+else{
+
+
+    $data_alumno = eliminar_repetidos($data_alumno);
+    $periodo_notas = [];
+    $total_notas = [];
+    $total_cursos = 0;
+    echo "Cursos por alumno:\n\n";
+    foreach($data_alumno as $alumno){
+        list($periodo, $sigla, $curso, $nota, $calificacion) = $alumno;
+        echo "Periodo: $periodo\n";
+        echo "Sigla: $sigla\n";
+        echo "Curso: $curso\n";
+        echo "Nota: $nota\n";
+        echo "Calificación: $calificacion\n\n";
+
+        if ($nota !== "x") {
+            $nota = (float) $nota;
+            $periodo_notas[$periodo][] = $nota;
+            $total_notas[] = $nota;
+            $total_cursos++;
+        }
     }
-    if (is_numeric($tiempo[3])){
-    $periodo_notas[$tiempo[0]][] = (float) $tiempo[3];
+    echo "\nPromedios por periodo:\n";
+    foreach ($periodo_notas as $periodo => $notas) {
+        if (count($notas) != 0){
+            $promedio = array_sum($notas) / count($notas);
+            echo "Periodo: $periodo, Promedio: $promedio\n";
+        }
+        else{
+            echo "Periodo: $periodo, Promedio: Sin notas\n";
+        }
+        
+        
+    }
+
+    if ($total_cursos != 0){
+        $promedio_general = array_sum($total_notas) / $total_cursos;
+    echo "Promedio general: $promedio_general\n";
+    }
+    else {
+        echo "El estudiante no tiene cursos aprobados\n";
     }
     
 }
 
-foreach ($periodo_notas as $fecha => $todas_notas){
-    if (count($todas_notas) != 0){
-        $promedio = array_sum($todas_notas) / count($todas_notas);
-        $periodo_notas[$fecha]= $promedio;
-    }
-    else{
-        $periodo_notas[$fecha]= 0;
-    }
-}
-
-if (count($data_alumno) == 1){
-    echo "No existe alúmno con ese RUN";
-}
-else{
-    foreach ($data_alumno as $elemento){
-        echo "\nPeriodo: ". $elemento[0]."\n"."Sigla: ". $elemento[1]."\n"."Curso: ". $elemento[2]."\n"."Nota: ". $elemento[3]."\n"."Calificación: ". $elemento[4]."\n";
-    }
-    array_shift($periodo_notas);
-    echo "\n";
-    foreach($periodo_notas as $fecha => $promedio){
-        echo "Periodo: ".$fecha. " Promedio: ". $promedio."\n";
-    }
-    $sum = 0;
-    $cantidad = count($periodo_notas);
-    foreach ($periodo_notas as $promedio){
-        $sum += $promedio;
-    }
-    $ppa = $sum / $cantidad;
-    echo "\nPromedio ponderado acumulado: ".$ppa."\n";
-}
 // SEGUNDO REQUEST
+
 $estudiantes_curso_periodo = [["Cohorte", "Nombre completo", "RUN", "Número de estudiante"]];
 for ($i = 1; $i < count($array_1); $i++){
-    if ($array_1[$i][14] == $curso && $array_1[$i][13] == $periodo ){
+    if ($array_1[$i][14] == $curso_ingresado && $array_1[$i][13] == $periodo_ingresado){
         $data = [$array_1[$i][0], $array_1[$i][9], $array_1[$i][4], $array_1[$i][10]];
         array_push($estudiantes_curso_periodo, $data);
     }
 }
 $estudiantes_curso_periodo = eliminar_repetidos($estudiantes_curso_periodo); // Elimina repetidos
 if (count($estudiantes_curso_periodo) == 1){
-    echo "Formato de curso y periodo erroneo, o no existentes";
+    echo "\nFormato de curso y periodo erroneo, no existentes o no se curso ese curso en el periodo\n";
 }
 else {
+    echo "\nEstudiantes que cursaron ".$curso_ingresado." en el ".$periodo_ingresado."\n";
     for ($i = 1; $i < count($estudiantes_curso_periodo); $i++){
         echo "\nCohorte: ".$estudiantes_curso_periodo[$i][0]."\n"."Nombre: ".$estudiantes_curso_periodo[$i][1]."\n"."RUN: ".$estudiantes_curso_periodo[$i][2]."\n"."Número: ".$estudiantes_curso_periodo[$i][3]."\n";
     }
 }
-
 
 // TIEMPO
 $end = microtime(true);
